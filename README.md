@@ -4,6 +4,8 @@
 
 Built with **R**, **Shiny**, **SQLite**, and **tidymodels** (via caret).
 
+![PredictR Dashboard](site.png)
+
 ## Features
 
 - **Data Ingestion**: Upload CSVs and automatically persist them to a local SQLite database.
