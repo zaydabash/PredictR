@@ -10,14 +10,14 @@ library(tidymodels)
 #'
 #' @param features Data frame with features.
 #' @param split_ratio Train/test split ratio.
+#' @param tune Logical, whether to tune hyperparameters.
 #' @return A list with the model workflow and test data.
-train_upsell_model <- function(features, split_ratio = 0.8) {
+train_upsell_model <- function(features, split_ratio = 0.8, tune = FALSE) {
   
   # Define Target: "High Value Potential"
   features <- features %>%
     mutate(is_premium = as.factor(ifelse(plan_tier %in% c("Pro", "Enterprise"), "Yes", "No")))
   
-  # Handle missing
   features[is.na(features)] <- 0
   
   set.seed(123)
@@ -28,19 +28,43 @@ train_upsell_model <- function(features, split_ratio = 0.8) {
   # Recipe
   rec <- recipe(is_premium ~ ., data = train_data) %>%
     update_role(account_id, new_role = "ID") %>%
-    step_rm(plan_tier, current_mrr, region) %>% # Remove target-leaking or irrelevant cols
+    step_rm(plan_tier, current_mrr, region) %>%
     step_dummy(all_nominal_predictors()) %>%
     step_zv(all_predictors())
   
-  # Model Specification (Random Forest)
-  spec <- rand_forest(trees = 100) %>%
-    set_engine("ranger", importance = "impurity") %>%
-    set_mode("classification")
-  
-  # Workflow
-  wf <- workflow() %>%
-    add_recipe(rec) %>%
-    add_model(spec)
+  # Model Specification
+  if (tune) {
+    spec <- rand_forest(mtry = tune(), min_n = tune(), trees = 100) %>%
+      set_engine("ranger", importance = "impurity") %>%
+      set_mode("classification")
+    
+    wf <- workflow() %>%
+      add_recipe(rec) %>%
+      add_model(spec)
+    
+    # Tuning Grid
+    grid <- grid_regular(mtry(range = c(1, 5)), min_n(), levels = 3)
+    folds <- vfold_cv(train_data, v = 5)
+    
+    res <- tune_grid(
+      wf,
+      resamples = folds,
+      grid = grid,
+      metrics = metric_set(roc_auc)
+    )
+    
+    best_params <- select_best(res, metric = "roc_auc")
+    wf <- finalize_workflow(wf, best_params)
+    
+  } else {
+    spec <- rand_forest(trees = 100) %>%
+      set_engine("ranger", importance = "impurity") %>%
+      set_mode("classification")
+    
+    wf <- workflow() %>%
+      add_recipe(rec) %>%
+      add_model(spec)
+  }
   
   # Fit
   fit <- fit(wf, data = train_data)

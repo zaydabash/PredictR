@@ -2,11 +2,14 @@ FROM rocker/shiny-verse:latest
 
 # Install system dependencies (if any needed for R packages)
 RUN apt-get update && apt-get install -y \
-    libsqlite3-dev \
+    libcurl4-gnutls-dev \
+    libssl-dev \
+    libxml2-dev \
+    pandoc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install R packages
-RUN R -e "install.packages(c('RSQLite', 'caret', 'pROC', 'DT', 'e1071', 'tidymodels', 'ranger', 'plotly', 'testthat', 'bslib'), repos='https://cloud.r-project.org/')"
+RUN R -e "install.packages(c('RSQLite', 'caret', 'pROC', 'DT', 'e1071', 'tidymodels', 'ranger', 'plotly', 'testthat', 'bslib', 'rmarkdown', 'glmnet'), repos='https://cloud.r-project.org/')"
 
 # Create app directory
 RUN mkdir -p /srv/shiny-server/app

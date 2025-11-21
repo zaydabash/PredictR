@@ -1,0 +1,66 @@
+---
+title: "PredictR Model Evaluation Report"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  churn_model: NULL
+  upsell_model: NULL
+  test_data_churn: NULL
+  test_data_upsell: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(dplyr)
+library(tidymodels)
+library(yardstick)
+library(pROC)
+```
+
+## Executive Summary
+
+This report evaluates the performance of the latest **Churn** and **Upsell** models trained by PredictR.
+
+## Churn Model Evaluation
+
+```{r churn-metrics}
+if (!is.null(params$churn_model) && !is.null(params$test_data_churn)) {
+  preds <- predict(params$churn_model, params$test_data_churn, type = "prob") %>%
+    bind_cols(params$test_data_churn)
+  
+  roc_val <- roc_auc(preds, is_churned, .pred_1)$.estimate
+  acc_val <- accuracy(preds %>% mutate(cls = as.factor(ifelse(.pred_1 > 0.5, 1, 0))), is_churned, cls)$.estimate
+  
+  cat(paste0("**AUC**: ", round(roc_val, 3), "\n\n"))
+  cat(paste0("**Accuracy**: ", round(acc_val, 3), "\n"))
+} else {
+  cat("Churn model data not available.")
+}
+```
+
+### ROC Curve
+
+```{r churn-roc}
+if (!is.null(params$churn_model) && !is.null(params$test_data_churn)) {
+  preds %>%
+    roc_curve(is_churned, .pred_1) %>%
+    autoplot() +
+    ggtitle("Churn Model ROC")
+}
+```
+
+## Upsell Model Evaluation
+
+```{r upsell-metrics}
+if (!is.null(params$upsell_model) && !is.null(params$test_data_upsell)) {
+  preds_up <- predict(params$upsell_model, params$test_data_upsell, type = "prob") %>%
+    bind_cols(params$test_data_upsell)
+  
+  roc_val_up <- roc_auc(preds_up, is_premium, .pred_Yes)$.estimate
+  
+  cat(paste0("**AUC**: ", round(roc_val_up, 3), "\n"))
+} else {
+  cat("Upsell model data not available.")
+}
+```
