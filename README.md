@@ -27,6 +27,78 @@ Built with **R**, **Shiny**, **SQLite**, and **tidymodels** (via caret).
 - `sql/`: Database schema definitions.
 - `deploy/`: Docker configuration for deployment.
 
+  PredictR/
+│
+├── app/                     # Shiny application (UI + Server)
+│   ├── global.R
+│   ├── ui.R
+│   └── server.R
+│
+├── R/                       # Core analytics logic
+│   ├── data_prep.R
+│   ├── feature_engineering.R
+│   ├── models_churn.R
+│   ├── models_upsell.R
+│   ├── metrics.R
+│   └── db.R
+│
+├── data/
+│   └── sample/              # Synthetic starter data (CSV)
+│
+├── sql/
+│   └── schema.sql           # SQLite schema
+│
+├── deploy/
+│   ├── Dockerfile
+│   └── run.sh               # Build + run script
+│
+└── README.md
+
+
+## Architecture Diagram
+
+                   ┌────────────────────────┐
+                   │        CSV Upload       │
+                   │ (events / accounts /    │
+                   │   subscriptions)        │
+                   └────────────┬───────────┘
+                                │
+                                ▼
+                     ┌──────────────────────┐
+                     │  Data Ingestion      │
+                     │  • Validation        │
+                     │  • Cleaning          │
+                     └────────────┬─────────┘
+                                │
+                                ▼
+                   ┌──────────────────────────┐
+                   │     SQLite Database      │
+                   │  (DBI + RSQLite)         │
+                   └────────────┬────────────┘
+                                │
+                                ▼
+             ┌──────────────────────────────┐
+             │      Feature Engineering      │
+             │  tenure / MRR / recency /     │
+             │  aggregation / normalization  │
+             └────────────┬─────────────────┘
+                          │
+                          ▼
+     ┌──────────────────────────────┐      ┌──────────────────────────────┐
+     │      Churn Model             │      │      Upsell Model            │
+     │ (Tidymodels + caret LR)      │      │ (Probability-based scoring)  │
+     └────────────┬─────────────────┘      └────────────┬─────────────────┘
+                  │                                      │
+                  └──────────────────┬───────────────────┘
+                                     ▼
+                         ┌───────────────────────┐
+                         │     Shiny Dashboard   │
+                         │  • Metrics            │
+                         │  • ROC curves         │
+                         │  • Account lists      │
+                         └───────────────────────┘
+                         
+
 ## How to Run
 
 ### Option 1: Run Locally (R)
