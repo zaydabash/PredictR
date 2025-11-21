@@ -1,0 +1,11 @@
+account_id,name,signup_date,region
+101,Acme Corp,2023-01-15,NA
+102,Globex,2023-02-20,EU
+103,Soylent Corp,2023-03-10,NA
+104,Initech,2023-04-05,NA
+105,Umbrella Corp,2023-05-12,EU
+106,Stark Ind,2023-06-01,NA
+107,Wayne Ent,2023-06-15,NA
+108,Cyberdyne,2023-07-20,APAC
+109,Massive Dynamic,2023-08-11,EU
+110,Hooli,2023-09-01,NA

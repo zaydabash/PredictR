@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.sqlite
+.DS_Store
+/deploy/.DS_Store

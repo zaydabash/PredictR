@@ -1,0 +1,11 @@
+subscription_id,account_id,plan_tier,mrr,status,start_date,end_date
+501,101,Enterprise,1000,Active,2023-01-15,
+502,102,Pro,200,Active,2023-02-20,
+503,103,Basic,50,Churned,2023-03-10,2023-09-10
+504,104,Pro,200,Active,2023-04-05,
+505,105,Enterprise,1200,Active,2023-05-12,
+506,106,Pro,200,Active,2023-06-01,
+507,107,Basic,50,Active,2023-06-15,
+508,108,Basic,50,Churned,2023-07-20,2023-10-20
+509,109,Pro,200,Active,2023-08-11,
+510,110,Enterprise,1500,Active,2023-09-01,
