@@ -118,7 +118,7 @@ Requires R and the following packages: `shiny`, `dplyr`, `ggplot2`, `DT`, `DBI`,
    ```bash
    ./deploy/run.sh
    ```
-2. Open your browser to [http://localhost:3838](http://localhost:3838).
+2. Open your browser to [http://localhost](http://localhost).
 
 ## Workflow
 
