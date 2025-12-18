@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS accounts (
     account_id INTEGER PRIMARY KEY,
+    tenant_id TEXT,
     name TEXT,
     signup_date TEXT,
     region TEXT
@@ -7,6 +8,7 @@ CREATE TABLE IF NOT EXISTS accounts (
 
 CREATE TABLE IF NOT EXISTS subscriptions (
     subscription_id INTEGER PRIMARY KEY,
+    tenant_id TEXT,
     account_id INTEGER,
     plan_tier TEXT,
     mrr REAL,
@@ -18,6 +20,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 
 CREATE TABLE IF NOT EXISTS events (
     event_id INTEGER PRIMARY KEY,
+    tenant_id TEXT,
     account_id INTEGER,
     event_type TEXT,
     timestamp TEXT,

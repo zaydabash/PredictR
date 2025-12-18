@@ -11,14 +11,14 @@ test_that("create_features generates correct columns", {
   # Insert dummy data
   DBI::dbWriteTable(conn, "accounts", data.frame(
     account_id = 1, name = "Test", signup_date = as.character(Sys.Date() - 10), region = "NA"
-  ))
+  ), overwrite = TRUE)
   DBI::dbWriteTable(conn, "subscriptions", data.frame(
     subscription_id = 1, account_id = 1, plan_tier = "Pro", mrr = 100, 
     status = "Active", start_date = as.character(Sys.Date() - 10), end_date = NA
-  ))
+  ), overwrite = TRUE)
   DBI::dbWriteTable(conn, "events", data.frame(
     event_id = 1, account_id = 1, event_type = "login", timestamp = as.character(Sys.time())
-  ))
+  ), overwrite = TRUE)
   
   feats <- create_features(conn)
   

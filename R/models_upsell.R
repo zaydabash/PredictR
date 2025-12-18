@@ -16,21 +16,24 @@ train_upsell_model <- function(features, split_ratio = 0.8, tune = FALSE) {
   
   # Define Target: "High Value Potential"
   features <- features %>%
-    mutate(is_premium = as.factor(ifelse(plan_tier %in% c("Pro", "Enterprise"), "Yes", "No")))
+    mutate(is_premium = factor(ifelse(plan_tier %in% c("Pro", "Enterprise"), "Yes", "No"), levels = c("No", "Yes")))
   
-  features[is.na(features)] <- 0
-  
+  # Split
   set.seed(123)
   split <- initial_split(features, prop = split_ratio, strata = is_premium)
   train_data <- training(split)
   test_data <- testing(split)
   
-  # Recipe
+  # Recipe with robust preprocessing
   rec <- recipe(is_premium ~ ., data = train_data) %>%
     update_role(account_id, new_role = "ID") %>%
-    step_rm(plan_tier, current_mrr, region) %>%
+    step_rm(has_role("ID"), plan_tier, current_mrr) %>%
+    step_impute_median(all_numeric_predictors()) %>%
+    step_impute_mode(all_nominal_predictors()) %>%
+    step_novel(all_nominal_predictors()) %>%
     step_dummy(all_nominal_predictors()) %>%
-    step_zv(all_predictors())
+    step_zv(all_predictors()) %>%
+    step_normalize(all_numeric_predictors())
   
   # Model Specification
   if (tune) {
@@ -44,16 +47,16 @@ train_upsell_model <- function(features, split_ratio = 0.8, tune = FALSE) {
     
     # Tuning Grid
     grid <- grid_regular(mtry(range = c(1, 5)), min_n(), levels = 3)
-    folds <- vfold_cv(train_data, v = 5)
+    folds <- vfold_cv(train_data, v = 5, strata = is_premium)
     
     res <- tune_grid(
       wf,
       resamples = folds,
       grid = grid,
-      metrics = metric_set(roc_auc)
+      metrics = metric_set(roc_auc, pr_auc)
     )
     
-    best_params <- select_best(res, metric = "roc_auc")
+    best_params <- select_best(res, metric = "pr_auc")
     wf <- finalize_workflow(wf, best_params)
     
   } else {
@@ -78,6 +81,5 @@ train_upsell_model <- function(features, split_ratio = 0.8, tune = FALSE) {
 #' @param new_data Data frame to predict on.
 #' @return Vector of probabilities for "Yes".
 predict_upsell <- function(model, new_data) {
-  new_data[is.na(new_data)] <- 0
   predict(model, new_data, type = "prob")$.pred_Yes
 }

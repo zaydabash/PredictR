@@ -14,9 +14,9 @@ library(tidymodels)
 #' @return A list with the model workflow and test data.
 train_churn_model <- function(features, split_ratio = 0.8, tune = FALSE) {
   
-  # Ensure target is a factor
-  features$is_churned <- as.factor(features$is_churned)
-  features[is.na(features)] <- 0
+  # Ensure target is a factor with descriptive levels for tidymodels
+  features <- features %>%
+    mutate(is_churned = factor(is_churned, levels = c("0", "1"), labels = c("No", "Yes")))
   
   # Split
   set.seed(123)
@@ -24,13 +24,20 @@ train_churn_model <- function(features, split_ratio = 0.8, tune = FALSE) {
   train_data <- training(split)
   test_data <- testing(split)
   
-  # Recipe
+  # Recipe with robust preprocessing
   rec <- recipe(is_churned ~ ., data = train_data) %>%
     update_role(account_id, new_role = "ID") %>%
-    step_rm(region) %>%
+    step_rm(has_role("ID")) %>%
+    step_impute_median(all_numeric_predictors()) %>%
+    step_impute_mode(all_nominal_predictors()) %>%
+    step_novel(all_nominal_predictors()) %>%
     step_dummy(all_nominal_predictors()) %>%
     step_zv(all_predictors()) %>%
     step_normalize(all_numeric_predictors())
+  
+  # Handling class imbalance (using downsampling for simplicity in this template)
+  # requires 'themis' package, but let's check if we can doing it via weights or simple sampling
+  # For now, let's use a standard model and suggest smote/downsampling in advanced docs
   
   # Model Specification
   if (tune) {
@@ -44,16 +51,16 @@ train_churn_model <- function(features, split_ratio = 0.8, tune = FALSE) {
     
     # Tuning Grid
     grid <- grid_regular(penalty(), mixture(), levels = 5)
-    folds <- vfold_cv(train_data, v = 5)
+    folds <- vfold_cv(train_data, v = 5, strata = is_churned)
     
     res <- tune_grid(
       wf,
       resamples = folds,
       grid = grid,
-      metrics = metric_set(roc_auc)
+      metrics = metric_set(roc_auc, pr_auc)
     )
     
-    best_params <- select_best(res, metric = "roc_auc")
+    best_params <- select_best(res, metric = "pr_auc") # PR AUC better for imbalanced churn
     wf <- finalize_workflow(wf, best_params)
     
   } else {
@@ -78,9 +85,5 @@ train_churn_model <- function(features, split_ratio = 0.8, tune = FALSE) {
 #' @param new_data Data frame to predict on.
 #' @return Vector of probabilities.
 predict_churn <- function(model, new_data) {
-  # Handle missing values if not handled by recipe (recipe handles it if passed correctly)
-  # But for safety in this simple template:
-  new_data[is.na(new_data)] <- 0
-  
-  predict(model, new_data, type = "prob")$.pred_1
+  predict(model, new_data, type = "prob")$.pred_Yes
 }

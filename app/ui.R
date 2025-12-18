@@ -1,72 +1,88 @@
 # UI Definition
 
-ui <- navbarPage(
-  title = "PredictR",
-  theme = bslib::bs_theme(bootswatch = "flatly"),
+library(bslib)
+library(plotly)
+library(DT)
+
+ui <- page_navbar(
+  title = "PredictR | SaaS Analytics",
+  theme = bs_theme(
+    version = 5,
+    preset = "shiny",
+    primary = "#007bff",
+    base_font = font_google("Inter")
+  ),
+  sidebar = sidebar(
+    title = "Data Controls",
+    fileInput("file_events", "Events CSV", accept = ".csv"),
+    fileInput("file_accounts", "Accounts CSV", accept = ".csv"),
+    fileInput("file_subs", "Subscriptions CSV", accept = ".csv"),
+    actionButton("btn_ingest", "Ingest Data", class = "btn-primary w-100 mb-2"),
+    actionButton("btn_load_sample", "Load Sample Data", class = "btn-outline-info w-100"),
+    hr(),
+    textOutput("status_msg")
+  ),
   
-  # Tab 1: Data Management
-  tabPanel("Data",
-    sidebarLayout(
-      sidebarPanel(
-        h4("Upload Data"),
-        fileInput("file_events", "Events CSV", accept = ".csv"),
-        fileInput("file_accounts", "Accounts CSV", accept = ".csv"),
-        fileInput("file_subs", "Subscriptions CSV", accept = ".csv"),
-        actionButton("btn_ingest", "Ingest Data", class = "btn-primary"),
-        hr(),
-        actionButton("btn_load_sample", "Load Sample Data", class = "btn-info"),
-        hr(),
-        textOutput("status_msg")
+  nav_panel("Dashboard",
+    layout_columns(
+      card(
+        card_header("Plan Distribution"),
+        plotlyOutput("plot_plan_dist")
       ),
-      mainPanel(
-        h4("Data Summary"),
-        tableOutput("table_summary")
+      card(
+        card_header("Revenue Distribution (MRR)"),
+        plotlyOutput("plot_mrr_dist")
       )
+    ),
+    card(
+      card_header("Account Summary"),
+      tableOutput("table_summary")
     )
   ),
   
-  # Tab 2: Churn Model
-  tabPanel("Churn Model",
-    sidebarLayout(
-      sidebarPanel(
-        h4("Train Churn Model"),
+  nav_panel("Churn Model",
+    layout_columns(
+      card(
+        card_header("Training Controls"),
         sliderInput("split_churn", "Train/Test Split", min = 0.5, max = 0.9, value = 0.8),
-        actionButton("btn_train_churn", "Train Model", class = "btn-success")
+        actionButton("btn_train_churn", "Train Model", class = "btn-success w-100")
       ),
-      mainPanel(
-        tabsetPanel(
-          tabPanel("Metrics", tableOutput("churn_metrics")),
-          tabPanel("ROC Curve", plotlyOutput("churn_roc")),
-          tabPanel("High Risk Accounts", DTOutput("churn_risks"))
-        )
+      card(
+        card_header("Performance Metrics"),
+        tableOutput("churn_metrics")
       )
+    ),
+    layout_columns(
+      card(
+        card_header("ROC Curve"),
+        plotlyOutput("churn_roc")
+      ),
+      card(
+        card_header("PR Curve"),
+        plotlyOutput("churn_pr")
+      )
+    ),
+    card(
+      card_header("High Risk Accounts"),
+      DTOutput("churn_risks")
     )
   ),
   
-  # Tab 3: Upsell Model
-  tabPanel("Upsell Model",
-    sidebarLayout(
-      sidebarPanel(
-        h4("Train Upsell Model"),
-        sliderInput("split_upsell", "Train/Test Split", min = 0.5, max = 0.9, value = 0.8),
-        actionButton("btn_train_upsell", "Train Model", class = "btn-success")
-      ),
-      mainPanel(
-        tabsetPanel(
-          tabPanel("Metrics", tableOutput("upsell_metrics")),
-          tabPanel("Predictions", DTOutput("upsell_preds"))
+  nav_panel("Upsell Model",
+    layout_columns(
+        card(
+          card_header("Training Controls"),
+          sliderInput("split_upsell", "Train/Test Split", min = 0.5, max = 0.9, value = 0.8),
+          actionButton("btn_train_upsell", "Train Model", class = "btn-success w-100")
+        ),
+        card(
+          card_header("Lift Chart"),
+          plotlyOutput("upsell_lift")
         )
-      )
-    )
-  ),
-  
-  # Tab 4: Revenue Overview
-  tabPanel("Revenue Overview",
-    mainPanel(
-      h4("Monthly Recurring Revenue (MRR) Distribution"),
-      plotlyOutput("plot_mrr_dist"),
-      h4("Plan Distribution"),
-      plotlyOutput("plot_plan_dist")
+    ),
+    card(
+      card_header("Upsell Opportunities"),
+      DTOutput("upsell_preds")
     )
   )
 )

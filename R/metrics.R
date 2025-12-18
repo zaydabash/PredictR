@@ -28,11 +28,40 @@ calculate_metrics <- function(predictions, truth) {
   sens <- sensitivity(data, truth, estimate)$.estimate
   spec <- specificity(data, truth, estimate)$.estimate
   roc <- roc_auc(data, truth, pred)$.estimate
+  pr_auc_val <- pr_auc(data, truth, pred)$.estimate
   
   tibble(
-    Metric = c("Accuracy", "Sensitivity", "Specificity", "AUC"),
-    Value = c(acc, sens, spec, roc)
+    Metric = c("Accuracy", "Sensitivity (Recall)", "Specificity", "ROC AUC", "PR AUC"),
+    Value = c(acc, sens, spec, roc, pr_auc_val)
   )
+}
+
+#' Plot Precision-Recall Curve
+#'
+#' @param predictions Numeric vector of probabilities.
+#' @param truth Factor vector of true labels.
+#' @return A ggplot object.
+plot_pr_curve <- function(predictions, truth) {
+  data <- tibble(truth = truth, pred = predictions)
+  
+  pr_curve(data, truth, pred) %>%
+    autoplot() +
+    theme_minimal() +
+    ggtitle("Precision-Recall Curve")
+}
+
+#' Plot Lift Chart
+#'
+#' @param predictions Numeric vector of probabilities.
+#' @param truth Factor vector of true labels.
+#' @return A ggplot object.
+plot_lift_chart <- function(predictions, truth) {
+  data <- tibble(truth = truth, pred = predictions)
+  
+  lift_curve(data, truth, pred) %>%
+    autoplot() +
+    theme_minimal() +
+    ggtitle("Lift Chart")
 }
 
 #' Plot ROC Curve
